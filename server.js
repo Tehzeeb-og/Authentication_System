@@ -4,6 +4,7 @@ const dataBase = require('./utils/db')
 
 const PORT =process.env.PORT
 
+// database connection
 
 dataBase()
 app.listen(PORT,()=>{
