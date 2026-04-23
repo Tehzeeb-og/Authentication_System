@@ -5,6 +5,7 @@ const Routes = express.Router()
 
 Routes.post('/register',controller.register)
 Routes.get('/get-me',controller.getUser)
+Routes.get('/refresh',controller.refresh)
 
 
 module.exports = Routes
