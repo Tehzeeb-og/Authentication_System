@@ -9,6 +9,7 @@ Routes.get('/get-me',controller.getUser)
 Routes.get('/refresh',controller.refresh)
 Routes.get('/logout',controller.logout)
 Routes.get('/logout-all',controller.logoutAll)
+Routes.post('/verify-email',controller.verifyEmail)
 
 
 module.exports = Routes
