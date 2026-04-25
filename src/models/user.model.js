@@ -15,6 +15,10 @@ const User = new mongoose.Schema({
     type: "string",
     required: [true, "Username is required"],
   },
+  verified:{
+    type:"boolean",
+    default:false
+  }
 });
 
 const userSchema = mongoose.model("users",User)
