@@ -194,14 +194,9 @@ exports.logout = async (req, res) => {
       message: "Refresh token not found",
     });
   }
-  try {
+  
     const decoded = jwt.verify(refreshToken, SECRET_KEY);
-  } catch (error) {
-    return res.status(401).json({
-      message: "Invalid Token",
-      err: error.message,
-    });
-  }
+  
 
   const session = await SESSION_MODEL.findOne({
     user: decoded.userId,
