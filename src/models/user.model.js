@@ -15,12 +15,19 @@ const User = new mongoose.Schema({
     type: "string",
     required: [true, "Username is required"],
   },
-  verified:{
-    type:"boolean",
-    default:false
-  }
+  verifyOtp: { type: "string" },
+  varifyOtpExpireAt: { type: "number" },
+
+  verified: {
+    type: "boolean",
+    default: false,
+  },
+  resetOtp: {
+    type: "string",
+  },
+  resetOtpExpireAt: { type: "number" },
 });
 
-const userSchema = mongoose.model("users",User)
+const userSchema = mongoose.model("users", User);
 
-module.exports = userSchema
+module.exports = userSchema;
