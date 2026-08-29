@@ -15,6 +15,10 @@ exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
+    if(!username || !email || !password){
+      res.status(400).json({message:"missing informtion"})
+    }
+
     const isAvailable = await USER_MODEL.findOne({
       $or: [{ username }, { email }],
     });
@@ -106,26 +110,17 @@ res.status(200).json({
 
 // GET USER
 exports.getUser = async (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    return res.status(401).json({
-      message: "token not found",
-    });
-  }
-
   try {
-    const decode = jwt.verify(token, SECRET_KEY);
-  } catch (error) {
-    return res.status(401).json({
-      message: "Invalid Token",
-      err: error.message,
-    });
-  }
-  const user = await USER_MODEL.findById({ _id: decode.userId });
-
-  res.status(200).json({
-    data: user,
+    res.status(200).json({
+    data: "user",
   });
+  } catch (error) {
+    res.status(500).json({
+      message:"unable to fetch",
+err:error.message
+    })
+  }
+  
 };
 
 // REFRESH TOKEN MIDDLEWARE

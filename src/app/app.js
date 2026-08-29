@@ -9,6 +9,9 @@ const app = express()
 app.use(express.json())
 app.use(morgan('dev'))
 app.use(cookieParser())
-app.use(cors())
+app.use(cors({
+  origin: 'http://localhost:5173', // Must exactly match your React app's URL
+  credentials: true,               // MUST be true to accept cookies
+}));
 app.use("/auth",Routing)
 module.exports = app
