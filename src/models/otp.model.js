@@ -12,7 +12,12 @@ user:{ type: mongoose.Schema.ObjectId,
 otpHash:{
     type:"string",
     required:[true,"OTP is required"]
-}
+},
+expiresAt: {
+    type: Date,
+    required: [true, "OTP expiry time is required"],
+    default: () => new Date(Date.now() + 60 * 1000),
+  }
 },{timestamps:true});
 
 const otpSchema = mongoose.model("otp",otp)

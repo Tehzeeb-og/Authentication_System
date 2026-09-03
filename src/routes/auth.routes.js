@@ -11,6 +11,7 @@ Routes.get('/refresh',controller.refresh)
 Routes.get('/logout',controller.logout)
 Routes.get('/logout-all',controller.logoutAll)
 Routes.post('/verify-email',controller.verifyEmail)
+Routes.post('/resend-otp',controller.resendOtp)
 
 
 module.exports = Routes
