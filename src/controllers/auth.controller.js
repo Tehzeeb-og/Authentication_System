@@ -41,7 +41,8 @@ const otp = generateOtp()
 OTP_MODEL.create({
   email,
   user:user._id,
-  otpHash
+  otpHash,
+  expiresAt: new Date(Date.now() + 60 * 1000),
 })
 
 
@@ -262,8 +263,21 @@ if(user.verified){
   })
 }
 
-const otpDoc = await OTP_MODEL.findOne({user:user._id}).sort({createdAt: -1})
-const compareOTPhash = await bcrypt.compare(otp,otpDoc.otpHash) 
+const otpDoc = await OTP_MODEL.findOne({ user: user._id }).sort({ createdAt: -1 });
+if (!otpDoc) {
+  return res.status(400).json({
+    message:"OTP not found or expired",
+  });
+}
+
+if (new Date(otpDoc.expiresAt).getTime() < Date.now()) {
+  await OTP_MODEL.deleteMany({ user: user._id });
+  return res.status(400).json({
+    message:"OTP has expired. Please request a new one.",
+  });
+}
+
+const compareOTPhash = await bcrypt.compare(otp, otpDoc.otpHash) 
 if(!compareOTPhash){
   return res.status(400).json({
     message:"INVALID OTP"
@@ -272,10 +286,32 @@ if(!compareOTPhash){
 user.verified = true
 await user.save()
 
+const refreshToken = jwt.sign({ userId: user._id }, config.JWT_SECRET, {
+  expiresIn: "7d",
+});
+const salt = await bcrypt.genSalt(saltRounds);
+const refreshTokenHash = await bcrypt.hash(refreshToken, salt);
+
+const session = await SESSION_MODEL.create({
+  user: user._id,
+  refreshTokenHash,
+  ip: req.ip,
+  userAgent: req.headers["user-agent"],
+});
+
+const accessToken = jwt.sign(
+  { userId: user._id, sessionId: session._id },
+  config.JWT_SECRET,
+  { expiresIn: "15m" },
+);
+
 await OTP_MODEL.deleteMany({ user: user._id });
+
+res.cookie("refreshToken", refreshToken);
 
   res.status(200).json({
     message:"Email verified successfully",
+    accessToken,
    })
  
   } catch (error) {
@@ -286,3 +322,53 @@ await OTP_MODEL.deleteMany({ user: user._id });
   }
   
 }
+
+exports.resendOtp = async (req,res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    const user = await USER_MODEL.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (user.verified) {
+      return res.status(400).json({
+        message: "User is already verified",
+      });
+    }
+
+    await OTP_MODEL.deleteMany({ user: user._id });
+
+    const otp = generateOtp();
+    const salt = await bcrypt.genSalt(saltRounds);
+    const otpHash = await bcrypt.hash(otp, salt);
+
+    await OTP_MODEL.create({
+      email,
+      user: user._id,
+      otpHash,
+      expiresAt: new Date(Date.now() + 60 * 1000),
+    });
+
+    const htmlGmail = gmailHtml(user.username, otp);
+    await sendEmail(email, "OTP VERIFICATION", `Your OTP code is ${otp}`, htmlGmail);
+
+    return res.status(200).json({
+      message: "OTP resent successfully. Please check your email.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Unable to resend OTP",
+      err: error.message,
+    });
+  }
+};
